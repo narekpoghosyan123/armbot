@@ -1,0 +1,45 @@
+
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+import yt_dlp
+
+TOKEN = "8687253497:AAFbBLle8xkU0O-VimAgVOboV9AmWQyp6do"
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ողջույն, ուղարկիր YouTube լինկը և ես կուղարկեմ Audio-ն Mp3 տարբերակով🎵")
+
+async def download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = update.message.text
+
+    ydl_opts = {
+    'format': 'bestaudio/best',
+    'outtmpl': 'audio.%(ext)s',
+    'noplaylist': True,
+    'concurrent_fragment_downloads': 4,
+    'retries': 3,
+    'fragment_retries': 3,
+    'socket_timeout': 10,
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+        }],
+    }
+
+    await update.message.reply_text("Ներբեռնում է... ⏳")
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    await update.message.reply_audio(audio=open("audio.mp3", "rb"))
+
+app = Application.builder().token(TOKEN).build()
+
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_audio))
+
+print("Бот запущен...")
+app.run_polling()
+
+python-telegram-bot
+yt-dlp
